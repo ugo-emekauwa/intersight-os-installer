@@ -110,7 +110,7 @@
 6. Save the changes you have made to the intersight_os_installer.py file.
 7. Run the intersight_os_installer.py file.
 
-## Related Tools:
+## Related Tools
 Here are similar tools to help administer and manage Cisco UCS environments.
 - [Cisco IMM Automation Tools](https://github.com/ugo-emekauwa/cisco-imm-automation-tools)
 
