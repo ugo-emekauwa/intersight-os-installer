@@ -111,7 +111,7 @@
 7. Run the intersight_os_installer.py file.
 
 ## Related Tools
-Here are similar tools to help administer and manage Cisco UCS environments.
+Here are similar tools to help administer and manage Cisco UCS and Intersight environments.
 - [Cisco IMM Automation Tools](https://github.com/ugo-emekauwa/cisco-imm-automation-tools)
 
 ## Author
