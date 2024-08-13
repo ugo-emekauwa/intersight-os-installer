@@ -1,5 +1,5 @@
 """
-Automated OS Install Tool for Cisco Intersight, v1.0
+Automated OS Install Tool for Cisco Intersight, v1.1
 Author: Ugo Emekauwa
 Contact: uemekauw@cisco.com, uemekauwa@gmail.com
 Summary: The Automated OS Install Tool for Cisco Intersight automates the
@@ -59,12 +59,12 @@ values and replace them with your own, where applicable.
 ####### Start Configuration Settings - Provide values for the variables listed below. #######
 
 # General Settings
-## NOTE - For the "Server Identifier" key below, the accepted values are the Server serial, name, model, or PID (product ID). This information can be found in Intersight, if needed.
-## If there are Server with duplicate names, models, or PIDs, please use the serial to ensure the correct Server is selected.
-## Here is an example using the Server serial: "Server Identifier": "FOX1337G777"
-## Here is an example using the Server name: "Server Identifier": "UCS-IMM-Pod-1"
-## Here is an example using the Server model: "Server Identifier": "N20-C6508"
-## Here is an example using the Server PID: "Server Identifier": "N20-C6508"
+## NOTE - For the "Server Identifier" key below, the accepted values are the Server serial, name, model, PID (product ID), or user label. This information can be found in Intersight, if needed.
+## If there are Server with duplicate names, models, PIDs, or user labels, please use the serial to ensure the correct Server is selected.
+## Here is an example using the Server serial: "Server Identifier": " FCH37527777"
+## Here is an example using the Server name: "Server Identifier": "UCS-IMM-Pod-1-1"
+## Here is an example using the Server model: "Server Identifier": "UCSX-210C-M7"
+## Here is an example using the Server PID: "Server Identifier": "UCSX-210C-M7"
 ## For the "Server Form Factor" key, the options are "Blade or "Rack".
 ## For the "Server Connection Type" key, the options are "FI-Attached" or "Standalone".
 ## To install an OS on additional target servers, add more dictionary entries below.
@@ -92,8 +92,13 @@ os_image_link_description = "OS Image Link added by the Automated OS Install Too
 pre_loaded_os_image_link = False
 pre_loaded_os_image_link_name = ""
 
-# Configuration Settings (Only Custom (from Local Machine) and Embedded (using the SCU) configuration sources are supported at this time)
-# Custom - Local Machine Configuration Source
+## Microsoft Windows Server OS Specific Settings (Only applicable if installing Microsoft Windows Server)
+os_install_windows_server_edition = ""      # Options: "Standard", "Datacenter", "StandardCore", "DatacenterCore". Provide an empty string ("") if installing other OSs.
+
+# Configuration Settings (Only "File" (Custom File from Local Machine) and "Embedded" configuration sources are supported at this time)
+os_install_configuration_file_source = "File"     # Options: "File", "Embedded"
+
+## Custom File - Local Machine Configuration Source (Only applicable if os_install_configuration_file_source is set to "File")
 os_install_configuration_file_location = "C:\\Users\\demouser\\Documents\\OS Configuration Files\\ubuntu-cloud-config-host1-v1.cfg"
 os_install_configuration_file_location_type = "local"       # Options: "local", "http"
 os_install_remove_return_from_configuration_file = True     # NOTE: Change only if there are issues reading the configuration file.
@@ -107,7 +112,7 @@ scu_image_link_access_username = ""
 scu_image_link_access_password = ""
 scu_image_link_name = "UCS SCU 6.3(2c) ISO Image - 001"
 scu_image_link_version = "6.3(2c)"      # Options: "CentOS 8.3", "Windows Server 2022", "Rocky Linux 9.1", "Ubuntu Server 22.04.2 LTS", "ESXi 8.0 U2", etc. See Intersight docs for all available options.
-scu_image_link_supported_models = ["UCSX-210C-M6", "UCSX-210C-M7"]
+scu_image_link_supported_models = ["UCSX-210C-M6", "UCSX-210C-M7", "UCSB-B200-M5"]
 scu_image_link_description = "SCU Image Link added by the Automated OS Install Tool for Cisco Intersight."
 
 ## Select Pre-Loaded SCU Image Link (Change only if using a SCU Image Link that has already been loaded into the target Intersight account)
@@ -125,8 +130,8 @@ os_install_target_disk_physical_serial_number = ""
 os_install_secure_boot_override = True
 
 # Misc Settings (Change only if needed)
-os_install_name = f"dCloud_AI_X_Demo_OS_Install_{int(time.time())}"
-os_install_description = f"dCloud AI X-Series Demo OS Install launched at {int(time.time())}."
+os_install_name = f"Sample_OS_Install_{int(time.time())}"
+os_install_description = f"Sample OS Install launched at {int(time.time())}."
 os_install_method = "vMedia"        # NOTE: Only "vMedia" is supported at this time by Intersight. iPXE to be supported in the future.
 
 # Intersight Base URL Setting (Change only if using the Intersight Virtual Appliance)
@@ -1747,7 +1752,6 @@ class OsInstallDeployment:
     """
     object_type = "OS Install Deployment"
     intersight_api_path = "os/Installs"
-    object_variable_value_maps = None
     
     def __init__(
         self,
@@ -1756,7 +1760,8 @@ class OsInstallDeployment:
         os_install_target_server_id_dictionary,
         os_install_os_image_link_name,
         os_install_scu_image_link_name,
-        os_install_configuration_file_location,
+        os_install_configuration_file_source="File",
+        os_install_configuration_file_location="",
         os_install_configuration_file_location_type="local",
         os_install_remove_return_from_configuration_file=True,
         os_install_target_disk_type="Virtual",
@@ -1768,6 +1773,7 @@ class OsInstallDeployment:
         os_install_secure_boot_override=True,
         os_install_name="",
         os_install_description="",
+        os_install_windows_server_edition="",
         organization="default",
         intersight_base_url="https://www.intersight.com/api/v1",
         tags=None,
@@ -1778,6 +1784,7 @@ class OsInstallDeployment:
         self.os_install_target_server_id_dictionary = os_install_target_server_id_dictionary
         self.os_install_os_image_link_name = os_install_os_image_link_name
         self.os_install_scu_image_link_name = os_install_scu_image_link_name
+        self.os_install_configuration_file_source = os_install_configuration_file_source
         self.os_install_configuration_file_location = os_install_configuration_file_location
         self.os_install_configuration_file_location_type = os_install_configuration_file_location_type
         self.os_install_remove_return_from_configuration_file = os_install_remove_return_from_configuration_file
@@ -1790,6 +1797,7 @@ class OsInstallDeployment:
         self.os_install_secure_boot_override = os_install_secure_boot_override
         self.os_install_name = os_install_name
         self.os_install_description = os_install_description
+        self.os_install_windows_server_edition = os_install_windows_server_edition
         self.organization = organization
         self.intersight_base_url = intersight_base_url
         if tags is None:
@@ -1823,6 +1831,7 @@ class OsInstallDeployment:
             f"'{self.os_install_target_server_id_dictionary}', "
             f"'{self.os_install_os_image_link_name}', "
             f"'{self.os_install_scu_image_link_name}', "
+            f"'{self.os_install_configuration_file_source}', "
             f"'{self.os_install_configuration_file_location}', "
             f"'{self.os_install_configuration_file_location_type}', "
             f"{self.os_install_remove_return_from_configuration_file}, "
@@ -1835,6 +1844,7 @@ class OsInstallDeployment:
             f"{self.os_install_secure_boot_override}, "
             f"'{self.os_install_name}', "
             f"'{self.os_install_description}', "
+            f"'{self.os_install_windows_server_edition}', "
             f"'{self.organization}', "
             f"'{self.intersight_base_url}', "
             f"{self.tags}, "
@@ -1949,88 +1959,6 @@ class OsInstallDeployment:
         # Update the API body with the Intersight Tags dictionary list
         self.intersight_api_body["Tags"] = tags_dictionary_list
 
-    def _update_api_body_mapped_object_attributes(self):
-        """This function updates the Intersight API body with individual
-        attributes that require mapping frontend to backend values for
-        compatibility with the Intersight API.
-        Raises:
-            Exception:
-                An exception occurred while reformatting a provided value for
-                an attribute. The issue will likely be due to the provided
-                value not being in string format. Changing the value to string
-                format should resolve the exception.
-        """
-        # Check for object variables with value maps that need configuration
-        if self.object_variable_value_maps:
-            for object_variable in self.object_variable_value_maps:
-                # Create list of all known and accepted frontend values
-                all_known_and_accepted_frontend_values = (object_variable_value["FrontEndValue"]
-                                                          for
-                                                          object_variable_value
-                                                          in
-                                                          object_variable["Values"]
-                                                          )
-                # Retrieve the user provided object variable value
-                provided_object_variable_value = getattr(self,
-                                                         object_variable["VariableName"]
-                                                         )
-                # Reformat the user provided object variable value to lowercase and remove spaces to prevent potential format issues
-                try:
-                    reformatted_object_variable_value = "".join(provided_object_variable_value.lower().split())
-                except Exception:
-                    print("\nA configuration error has occurred!\n")
-                    print(f"During the configuration of the {self.object_type} named "
-                          f"{self.pool_name}, there was an issue with the value "
-                          f"provided for the {object_variable['Description']} setting.")
-                    print(f"The value provided was {provided_object_variable_value}.")
-                    print("To proceed, the value provided for the "
-                          f"{object_variable['Description']} setting should be updated to "
-                          "an accepted string format.")
-                    print("The recommended values are the following:\n")
-                    # Print list of all known and accepted frontend values for user
-                    print(*all_known_and_accepted_frontend_values,
-                          sep=", "
-                          )
-                    print("\nPlease update the configuration, then re-attempt "
-                          "execution.\n")
-                    sys.exit(0)
-                # Cycle through known values and match provided object variable value to backend value
-                for object_variable_value in object_variable["Values"]:
-                    # Create list of all known and accepted frontend and backend values
-                    current_known_frontend_and_backend_value_options = (object_variable_value.values())
-                    # Retrieve the current known backend value
-                    current_known_backend_value = object_variable_value["BackEndValue"]
-                    if (
-                        reformatted_object_variable_value
-                        in
-                        ("".join(current_known_frontend_or_backend_value.lower().split())
-                         for
-                         current_known_frontend_or_backend_value
-                         in
-                         current_known_frontend_and_backend_value_options
-                         )
-                        ):
-                        backend_object_variable_value = current_known_backend_value
-                        break
-                else:
-                    # If no backend match is found with the user provided object variable value, pass on the user provided object variable value to Intersight to decide
-                    print(f"\nWARNING: An unknown {self.object_type} value of "
-                          f"'{provided_object_variable_value}' has been "
-                          f"provided for the {object_variable['Description']} "
-                          "settings!")
-                    print("An attempt will be made to configure the unknown "
-                          f"{object_variable['Description']} value.")
-                    print("If there is an error, please use one of the "
-                          "following known values for the "
-                          f"{object_variable['Description']} settings, then "
-                          "re-attempt execution:\n")
-                    print(*all_known_and_accepted_frontend_values,
-                          sep=", "
-                          )
-                    backend_object_variable_value = provided_object_variable_value
-                # Update Intersight API body with the converted object variable value
-                self.intersight_api_body[object_variable["AttributeName"]] = backend_object_variable_value
-
     def _update_api_body_os_install_target_disk_type(self):
         """This function updates the Intersight API body with the OS Install Target Disk Type
         i.e. target platform in the accepted format.
@@ -2131,16 +2059,21 @@ class OsInstallDeployment:
             "ObjectType": "firmware.ServerConfigurationUtilityDistributable",
             "link": f"{self.intersight_base_url}/firmware/ServerConfigurationUtilityDistributables/{os_install_scu_image_link_name_moid}"
             }
-        # Update the API body with the provided Configuration File
-        os_install_configuration_file_data = load_configuration_file(
-            configuration_file_location=self.os_install_configuration_file_location,
-            configuration_file_location_type=self.os_install_configuration_file_location_type,
-            remove_return_from_configuration_file=self.os_install_remove_return_from_configuration_file
-            )
-        self.intersight_api_body["Answers"] = {
-            "AnswerFile": os_install_configuration_file_data,
-            "Source": "File"
-            }
+        # Update the API body with the provided Configuration File depending on the provided Configuration Source
+        if self.os_install_configuration_file_source == "File":
+            os_install_configuration_file_data = load_configuration_file(
+                configuration_file_location=self.os_install_configuration_file_location,
+                configuration_file_location_type=self.os_install_configuration_file_location_type,
+                remove_return_from_configuration_file=self.os_install_remove_return_from_configuration_file
+                )
+            self.intersight_api_body["Answers"] = {
+                "AnswerFile": os_install_configuration_file_data,
+                "Source": "File"
+                }
+        else:
+            self.intersight_api_body["Answers"] = {
+                "Source": "Embedded"
+                }
         # Update the API body with the OS Install Target Disk Type
         self._update_api_body_os_install_target_disk_type()
         # Update the API body with any provided Installation Target Disk Storage Settings depending on disk type
@@ -2152,6 +2085,12 @@ class OsInstallDeployment:
         # Update the API body with any provided OS Install Name
         if self.os_install_name:
             self.intersight_api_body["Name"] = self.os_install_name
+        # Update the API body with any provided Microsoft Windows Server Edition
+        if self.os_install_windows_server_edition:
+            self.intersight_api_body["OperatingSystemParameters"] = {
+                "ObjectType": "os.WindowsParameters",
+                "Edition": self.os_install_windows_server_edition
+                }
 
     def object_maker(self):
         """This function makes the targeted policy object.
@@ -2168,6 +2107,7 @@ def deploy_os_install(
     os_install_target_server_id_dictionary,
     os_install_os_image_link_name,
     os_install_scu_image_link_name,
+    os_install_configuration_file_source,
     os_install_configuration_file_location,
     os_install_configuration_file_location_type="local",
     os_install_remove_return_from_configuration_file=True,
@@ -2180,6 +2120,7 @@ def deploy_os_install(
     os_install_secure_boot_override=True,
     os_install_name="",
     os_install_description="",
+    os_install_windows_server_edition="",
     organization="default",
     intersight_base_url="https://www.intersight.com/api/v1",
     tags=None,
@@ -2206,8 +2147,14 @@ def deploy_os_install(
             The name of the OS image link.
         os_install_scu_image_link_name (str):
             The name of the SCU image link.
+        os_install_configuration_file_source (str):
+            Optional; The source of the configuration file. Available options
+            are "File" for a local custom file or "Embedded" for a 
+            configuration file that is embedded into the provided OS image. The
+            default value is "File".
         os_install_configuration_file_location (str):
-            The location of the configuration file.
+            Optional; The location of the configuration file. The default value
+            is an empty string ("").
         os_install_configuration_file_location_type (str):
             Optional; The location type for the configuration file. Available
             options are "local" for local file paths and "http" for access over 
@@ -2246,6 +2193,11 @@ def deploy_os_install(
         os_install_description (str):
             Optional; The description of the OS install deployment. The default
             value is an empty string ("").
+        os_install_windows_server_edition (str):
+            Optional; The Windows server edition, if installing the Microsoft
+            Windows Server OS. Available options include "Standard",
+            "Datacenter", "StandardCore", and "DatacenterCore". The default
+            value is "Datacenter".
         organization (str):
             Optional; The Intersight account organization of the OS install
             deployment. The default value is "default".
@@ -2297,6 +2249,7 @@ def deploy_os_install(
             os_install_target_server_id_dictionary=os_install_target_server_id_dictionary,
             os_install_os_image_link_name=os_install_os_image_link_name,
             os_install_scu_image_link_name=os_install_scu_image_link_name,
+            os_install_configuration_file_source=os_install_configuration_file_source,
             os_install_configuration_file_location=os_install_configuration_file_location,
             os_install_configuration_file_location_type=os_install_configuration_file_location_type,
             os_install_remove_return_from_configuration_file=os_install_remove_return_from_configuration_file,
@@ -2309,6 +2262,7 @@ def deploy_os_install(
             os_install_secure_boot_override=os_install_secure_boot_override,
             os_install_name=os_install_name,
             os_install_description=os_install_description,
+            os_install_windows_server_edition=os_install_windows_server_edition,
             organization=organization,
             intersight_base_url=intersight_base_url,
             tags=tags,
@@ -2395,6 +2349,7 @@ def main():
         os_install_target_server_id_dictionary=os_install_target_server_id_dictionary,
         os_install_os_image_link_name=os_install_os_image_link_name,
         os_install_scu_image_link_name=os_install_scu_image_link_name,
+        os_install_configuration_file_source=os_install_configuration_file_source,
         os_install_configuration_file_location=os_install_configuration_file_location,
         os_install_configuration_file_location_type=os_install_configuration_file_location_type,
         os_install_remove_return_from_configuration_file=os_install_remove_return_from_configuration_file,
@@ -2407,6 +2362,7 @@ def main():
         os_install_secure_boot_override=os_install_secure_boot_override,
         os_install_name=os_install_name,
         os_install_description=os_install_description,
+        os_install_windows_server_edition=os_install_windows_server_edition,
         organization=os_install_organization,
         intersight_base_url=intersight_base_url,
         tags=os_install_tags,
