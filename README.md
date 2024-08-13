@@ -110,9 +110,21 @@
 6. Save the changes you have made to the intersight_os_installer.py file.
 7. Run the intersight_os_installer.py file.
 
+## Demonstrations and Learning Labs
+The Automated OS Install Tool for Cisco Intersight is used to power the following demonstrations and labs on Cisco dCloud:
+
+- [Running Gen AI and LLMs on Cisco UCS X-Series with NVIDIA GPUs](https://dcloud2.cisco.com/demo/ai-workloads-on-cisco-ucs-x-series-v1)
+<br><br>
+
+![Cisco UCS X-Series Lab Topology](./assets/Cisco_UCS_X-Series_Lab_Topology_2.png "Cisco UCS X-Series Lab Topology")
+<br><br>
+
+dCloud is available at [https://dcloud.cisco.com](https://dcloud.cisco.com), where Cisco product demonstrations and labs can be found in the Catalog.
+
 ## Related Tools
 Here are similar tools to help administer and manage Cisco UCS and Intersight environments.
 - [Cisco IMM Automation Tools](https://github.com/ugo-emekauwa/cisco-imm-automation-tools)
+- [UCS CIMC Certificate Renewal Tool](https://github.com/ugo-emekauwa/ucs_cimc_csr_tool)
 
 ## Author
 Ugo Emekauwa
