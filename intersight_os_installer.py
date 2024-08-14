@@ -1,5 +1,5 @@
 """
-Automated OS Install Tool for Cisco Intersight, v1.1
+Automated OS Install Tool for Cisco Intersight, v1.2
 Author: Ugo Emekauwa
 Contact: uemekauw@cisco.com, uemekauwa@gmail.com
 Summary: The Automated OS Install Tool for Cisco Intersight automates the
@@ -85,7 +85,7 @@ os_image_link_access_username = ""
 os_image_link_access_password = ""
 os_image_link_name = "Ubuntu Server 22.04.2 ISO Image - 001"
 os_image_link_vendor = "Ubuntu"      # Options: "CentOS", "Citrix", "Microsoft", "Nutanix", "Oracle", "Red Hat", "Rocky Linux, "SuSE", "Ubuntu", "VMware" as of 6/4/24. See Intersight docs for updates.
-os_image_link_version = "Ubuntu Server 22.04.2 LTS"      # Options: "CentOS 8.3", "Windows Server 2022", "Rocky Linux 9.1", "Ubuntu Server 22.04.2 LTS", "ESXi 8.0 U2", Etc. See Intersight docs for all available options.
+os_image_link_version = "Ubuntu Server 22.04.2 LTS"      # Options: "CentOS 8.3", "Windows Server 2022", "Rocky Linux 9.1", "Ubuntu Server 22.04.2 LTS", "ESXi 8.0 U2", "ESXi 7.0 U3", Etc. See Intersight docs for all available options.
 os_image_link_description = "OS Image Link added by the Automated OS Install Tool for Cisco Intersight."
 
 ## Select Pre-Loaded OS Image Link (Change only if using an OS Image Link that has already been loaded into the target Intersight account)
