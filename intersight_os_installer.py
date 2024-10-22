@@ -17,6 +17,7 @@ import re
 import urllib3
 import time
 import pathlib
+import requests
 
 ########################
 # MODULE REQUIREMENT 1 #
