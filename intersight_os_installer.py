@@ -123,7 +123,7 @@ pre_loaded_scu_image_link_name = ""
 # Installation Target Disk Storage Settings (Only "Local Disk" connectivity is supported at this time, Fibre Channel and iSCSI will be added when tested.)
 os_install_target_disk_type = "Virtual"     # Options: "Virtual", "Physical"
 os_install_target_disk_name = "MStorBootVd"
-os_install_target_disk_storage_controller_slot = "MSTOR-RAID"       # Options: "MSTOR-RAID", "MRAID", "FMEZZ1-SAS", Etc. See Intersight docs for more options.
+os_install_target_disk_storage_controller_slot = "MSTOR-RAID"       # Options: "MSTOR-RAID", "MRAID", "FMEZZ1-SAS", "NVMe-direct-U.2-drives", Etc. See Intersight docs for more options.
 os_install_target_disk_virtual_id = "0"
 os_install_target_disk_physical_serial_number = ""
 
