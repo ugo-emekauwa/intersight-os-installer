@@ -1,5 +1,5 @@
 """
-Automated OS Install Tool for Cisco Intersight, v1.2
+Automated OS Install Tool for Cisco Intersight, v1.3
 Author: Ugo Emekauwa
 Contact: uemekauw@cisco.com, uemekauwa@gmail.com
 Summary: The Automated OS Install Tool for Cisco Intersight automates the
