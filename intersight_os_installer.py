@@ -1,5 +1,5 @@
 """
-Automated OS Install Tool for Cisco Intersight, v1.3
+Automated OS Install Tool for Cisco Intersight, v1.4
 Author: Ugo Emekauwa
 Contact: uemekauw@cisco.com, uemekauwa@gmail.com
 Summary: The Automated OS Install Tool for Cisco Intersight automates the
@@ -68,7 +68,6 @@ values and replace them with your own, where applicable.
 ## Here is an example using the Server PID: "Server Identifier": "UCSX-210C-M7"
 ## For the "Server Form Factor" key, the options are "Blade or "Rack".
 ## For the "Server Connection Type" key, the options are "FI-Attached" or "Standalone".
-## To install an OS on additional target servers, add more dictionary entries below.
 os_install_target_server_id_dictionary = {
     "Server Identifier": "UCS-IMM-Pod-1-1",
     "Server Form Factor": "Blade",
@@ -1395,7 +1394,7 @@ class OsImageLink:
         self.intersight_api_body["Catalog"] = image_link_software_repository_catalog_moid
 
     def object_maker(self):
-        """This function makes the targeted policy object.
+        """This function makes the targeted object.
         """
         # Prepare the API body
         self.object_preparation()
@@ -2242,7 +2241,7 @@ def deploy_os_install(
             print("Exception Message: ")
             traceback.print_exc()
 
-    # Define and create SCU Image Link object in Intersight
+    # Define and create the OS Install Deployment object in Intersight
     builder(
         OsInstallDeployment(
             intersight_api_key_id=intersight_api_key_id,
