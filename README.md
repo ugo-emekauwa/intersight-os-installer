@@ -113,7 +113,7 @@
 ## Demonstrations and Learning Labs
 The Automated OS Install Tool for Cisco Intersight is used to power the following demonstrations and labs on Cisco dCloud:
 
-- [Running Gen AI and LLMs on Cisco UCS X-Series with NVIDIA GPUs](https://dcloud2.cisco.com/demo/ai-workloads-on-cisco-ucs-x-series-v1)
+- [Run Gen AI and LLMs on Cisco UCS X-Series with NVIDIA GPUs](https://dcloud2.cisco.com/demo/run-gen-ai-and-llms-on-cisco-ucs-x-series)
 <br><br>
 
 ![Cisco UCS X-Series Lab Topology](./assets/Cisco_UCS_X-Series_Lab_Topology_2.png "Cisco UCS X-Series Lab Topology")
