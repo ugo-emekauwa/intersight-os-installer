@@ -1,5 +1,5 @@
 """
-Automated OS Install Tool for Cisco Intersight, v1.4
+Automated OS Install Tool for Cisco Intersight, v1.5
 Author: Ugo Emekauwa
 Contact: uemekauw@cisco.com, uemekauwa@gmail.com
 Summary: The Automated OS Install Tool for Cisco Intersight automates the
@@ -77,7 +77,8 @@ os_install_organization = "default"
 os_install_tags = {"Org": "IT", "Dept": "DevOps"}  # Empty the os_install_tags dictionary if no tags are needed, for example: os_install_tags = {}
 
 # Operating System Settings
-## Add OS Image Link
+## Create OS Image Link
+create_os_image_link = True
 os_image_link_access_protocol_type = "NFS"       # Options: "CIFS", "NFS", "HTTP/S"
 os_image_link_file_location = "192.168.1.25/isos/ubuntu-22.04.4-live-server-amd64.iso"
 os_image_link_mount_options = ""
@@ -104,14 +105,15 @@ os_install_configuration_file_location_type = "local"       # Options: "local", 
 os_install_remove_return_from_configuration_file = True     # NOTE: Change only if there are issues reading the configuration file.
 
 # Server Configuration Utility Settings
-## Add SCU Image Link
+## Create SCU Image Link
+create_scu_image_link = True
 scu_image_link_access_protocol_type = "NFS"       # Options: "CIFS", "NFS", "HTTP/S"
 scu_image_link_file_location = "192.168.1.25/isos/ucs-scu-6.3.2c.iso"
 scu_image_link_mount_options = ""
 scu_image_link_access_username = ""
 scu_image_link_access_password = ""
 scu_image_link_name = "UCS SCU 6.3(2c) ISO Image - 001"
-scu_image_link_version = "6.3(2c)"      # Options: "CentOS 8.3", "Windows Server 2022", "Rocky Linux 9.1", "Ubuntu Server 22.04.2 LTS", "ESXi 8.0 U2", etc. See Intersight docs for all available options.
+scu_image_link_version = "6.3(2c)"
 scu_image_link_supported_models = ["UCSX-210C-M6", "UCSX-210C-M7", "UCSB-B200-M5"]
 scu_image_link_description = "SCU Image Link added by the Automated OS Install Tool for Cisco Intersight."
 
@@ -120,6 +122,8 @@ pre_loaded_scu_image_link = False
 pre_loaded_scu_image_link_name = ""
 
 # Installation Target Disk Storage Settings (Only "Local Disk" connectivity is supported at this time, Fibre Channel and iSCSI will be added when tested.)
+## Set OS Install Target Disk
+set_os_install_target_disk = True
 os_install_target_disk_type = "Virtual"     # Options: "Virtual", "Physical"
 os_install_target_disk_name = "MStorBootVd"
 os_install_target_disk_storage_controller_slot = "MSTOR-RAID"       # Options: "MSTOR-RAID", "MRAID", "FMEZZ1-SAS", "NVMe-direct-U.2-drives", Etc. See Intersight docs for more options.
@@ -1375,7 +1379,7 @@ class OsImageLink:
         self._update_api_body_image_link_access_protocol_type()
         # Update the API body with any provided Image Link Mount Options
         if self.image_link_mount_options:
-            self.intersight_api_body["Source"]["MountOption"] = self.image_link_mount_options
+            self.intersight_api_body["Source"]["MountOptions"] = self.image_link_mount_options
         # Update the API body with any provided Image Link Access Credentials
         if self.image_link_access_username:
             self.intersight_api_body["Source"]["Username"] = self.image_link_access_username
@@ -1759,11 +1763,12 @@ class OsInstallDeployment:
         intersight_api_key,
         os_install_target_server_id_dictionary,
         os_install_os_image_link_name,
-        os_install_scu_image_link_name,
+        os_install_scu_image_link_name="",
         os_install_configuration_file_source="File",
         os_install_configuration_file_location="",
         os_install_configuration_file_location_type="local",
         os_install_remove_return_from_configuration_file=True,
+        set_os_install_target_disk=True,
         os_install_target_disk_type="Virtual",
         os_install_target_disk_name="MStorBootVd",
         os_install_target_disk_storage_controller_slot="MSTOR-RAID",
@@ -1788,6 +1793,7 @@ class OsInstallDeployment:
         self.os_install_configuration_file_location = os_install_configuration_file_location
         self.os_install_configuration_file_location_type = os_install_configuration_file_location_type
         self.os_install_remove_return_from_configuration_file = os_install_remove_return_from_configuration_file
+        self.set_os_install_target_disk = set_os_install_target_disk
         self.os_install_target_disk_type = os_install_target_disk_type
         self.os_install_target_disk_name = os_install_target_disk_name
         self.os_install_target_disk_storage_controller_slot = os_install_target_disk_storage_controller_slot
@@ -1814,10 +1820,6 @@ class OsInstallDeployment:
         self.intersight_api_body = {
             "Description": self.os_install_description,
             "InstallMethod": self.os_install_method,
-            "InstallTarget": {
-                "Name": self.os_install_target_disk_name,
-                "StorageControllerSlotId": self.os_install_target_disk_storage_controller_slot,
-                },
             "OverrideSecureBoot": self.os_install_secure_boot_override,
             "ConfigurationFile": None,
             "AdditionalParameters": None
@@ -1835,6 +1837,7 @@ class OsInstallDeployment:
             f"'{self.os_install_configuration_file_location}', "
             f"'{self.os_install_configuration_file_location_type}', "
             f"{self.os_install_remove_return_from_configuration_file}, "
+            f"{self.set_os_install_target_disk}, "
             f"'{self.os_install_target_disk_type}', "
             f"'{self.os_install_target_disk_name}', "
             f"'{self.os_install_target_disk_storage_controller_slot}', "
@@ -2044,21 +2047,22 @@ class OsInstallDeployment:
             "link": f"{self.intersight_base_url}/softwarerepository/OperatingSystemFiles/{os_install_os_image_link_name_moid}"
             }
         # Update the API body with the SCU Image Link Moid and related data
-        os_install_scu_image_link_name_moid = intersight_object_moid_retriever(
-            intersight_api_key_id=None,
-            intersight_api_key=None,
-            object_name=self.os_install_scu_image_link_name,
-            intersight_api_path="firmware/ServerConfigurationUtilityDistributables?$top=1000",
-            object_type="SCU Image Link",
-            organization=self.organization,
-            preconfigured_api_client=self.api_client
-            )
-        self.intersight_api_body["OsduImage"] = {
-            "ClassId": "mo.MoRef",
-            "Moid": os_install_scu_image_link_name_moid,
-            "ObjectType": "firmware.ServerConfigurationUtilityDistributable",
-            "link": f"{self.intersight_base_url}/firmware/ServerConfigurationUtilityDistributables/{os_install_scu_image_link_name_moid}"
-            }
+        if self.os_install_scu_image_link_name:
+            os_install_scu_image_link_name_moid = intersight_object_moid_retriever(
+                intersight_api_key_id=None,
+                intersight_api_key=None,
+                object_name=self.os_install_scu_image_link_name,
+                intersight_api_path="firmware/ServerConfigurationUtilityDistributables?$top=1000",
+                object_type="SCU Image Link",
+                organization=self.organization,
+                preconfigured_api_client=self.api_client
+                )
+            self.intersight_api_body["OsduImage"] = {
+                "ClassId": "mo.MoRef",
+                "Moid": os_install_scu_image_link_name_moid,
+                "ObjectType": "firmware.ServerConfigurationUtilityDistributable",
+                "link": f"{self.intersight_base_url}/firmware/ServerConfigurationUtilityDistributables/{os_install_scu_image_link_name_moid}"
+                }
         # Update the API body with the provided Configuration File depending on the provided Configuration Source
         if self.os_install_configuration_file_source == "File":
             os_install_configuration_file_data = load_configuration_file(
@@ -2074,14 +2078,22 @@ class OsInstallDeployment:
             self.intersight_api_body["Answers"] = {
                 "Source": "Embedded"
                 }
-        # Update the API body with the OS Install Target Disk Type
-        self._update_api_body_os_install_target_disk_type()
-        # Update the API body with any provided Installation Target Disk Storage Settings depending on disk type
-        updated_os_install_target_disk_type = self.intersight_api_body.get("InstallTarget", {}).get("ObjectType")
-        if updated_os_install_target_disk_type == "os.VirtualDrive":
-            self.intersight_api_body["InstallTarget"]["Id"] = self.os_install_target_disk_virtual_id
-        if updated_os_install_target_disk_type == "os.PhysicalDisk":
-            self.intersight_api_body["InstallTarget"]["SerialNumber"] = self.os_install_target_disk_physical_serial_number
+        # Update the API body with an OS Install Target Disk if Set
+        if self.set_os_install_target_disk:
+            self.intersight_api_body["InstallTarget"] = {
+                "Name": self.os_install_target_disk_name,
+                "StorageControllerSlotId": self.os_install_target_disk_storage_controller_slot,
+                }
+            # Update the API body with the OS Install Target Disk Type
+            self._update_api_body_os_install_target_disk_type()
+            # Update the API body with any provided Installation Target Disk Storage Settings depending on disk type
+            updated_os_install_target_disk_type = self.intersight_api_body.get("InstallTarget", {}).get("ObjectType")
+            if updated_os_install_target_disk_type == "os.VirtualDrive":
+                self.intersight_api_body["InstallTarget"]["Id"] = self.os_install_target_disk_virtual_id
+            if updated_os_install_target_disk_type == "os.PhysicalDisk":
+                self.intersight_api_body["InstallTarget"]["SerialNumber"] = self.os_install_target_disk_physical_serial_number
+        else:
+            self.intersight_api_body["InstallTarget"] = None
         # Update the API body with any provided OS Install Name
         if self.os_install_name:
             self.intersight_api_body["Name"] = self.os_install_name
@@ -2111,6 +2123,7 @@ def deploy_os_install(
     os_install_configuration_file_location,
     os_install_configuration_file_location_type="local",
     os_install_remove_return_from_configuration_file=True,
+    set_os_install_target_disk=True,
     os_install_target_disk_type="Virtual",
     os_install_target_disk_name="MStorBootVd",
     os_install_target_disk_storage_controller_slot="MSTOR-RAID",
@@ -2162,6 +2175,10 @@ def deploy_os_install(
         os_install_remove_return_from_configuration_file (bool):
             Optional; The option to remove any instance of '\r' from the
             content of the configuration file. The default value is True.
+        set_os_install_target_disk (bool):
+            Optional; The option to set the target disk. Set to False if the
+            target disk is already set by another method, such as in the
+            configuration file. The default value is True.
         os_install_target_disk_type (str):
             Optional; The type of disk to be used for the target installation.
             The options are "Virtual" and "Physical". The default value is
@@ -2253,6 +2270,7 @@ def deploy_os_install(
             os_install_configuration_file_location=os_install_configuration_file_location,
             os_install_configuration_file_location_type=os_install_configuration_file_location_type,
             os_install_remove_return_from_configuration_file=os_install_remove_return_from_configuration_file,
+            set_os_install_target_disk=set_os_install_target_disk,
             os_install_target_disk_type=os_install_target_disk_type,
             os_install_target_disk_name=os_install_target_disk_name,
             os_install_target_disk_storage_controller_slot=os_install_target_disk_storage_controller_slot,
@@ -2293,54 +2311,60 @@ def main():
         )
 
     # Create the OS Image Link in Intersight if selected
-    add_os_image_link(
-        intersight_api_key_id=None,
-        intersight_api_key=None,
-        image_link_name=os_image_link_name,
-        image_link_file_location=os_image_link_file_location,
-        image_link_mount_options=os_image_link_mount_options,
-        image_link_access_protocol_type=os_image_link_access_protocol_type,
-        image_link_access_username=os_image_link_access_username,
-        image_link_access_password=os_image_link_access_password,
-        image_link_vendor=os_image_link_vendor,
-        image_link_version=os_image_link_version,
-        image_link_description=os_image_link_description,
-        organization=os_install_organization,
-        intersight_base_url=intersight_base_url,
-        tags=os_install_tags,
-        preconfigured_api_client=main_intersight_api_client
-        )
+    if create_os_image_link:
+        add_os_image_link(
+            intersight_api_key_id=None,
+            intersight_api_key=None,
+            image_link_name=os_image_link_name,
+            image_link_file_location=os_image_link_file_location,
+            image_link_mount_options=os_image_link_mount_options,
+            image_link_access_protocol_type=os_image_link_access_protocol_type,
+            image_link_access_username=os_image_link_access_username,
+            image_link_access_password=os_image_link_access_password,
+            image_link_vendor=os_image_link_vendor,
+            image_link_version=os_image_link_version,
+            image_link_description=os_image_link_description,
+            organization=os_install_organization,
+            intersight_base_url=intersight_base_url,
+            tags=os_install_tags,
+            preconfigured_api_client=main_intersight_api_client
+            )
 
     # Create the SCU Image Link in Intersight if selected
-    add_scu_image_link(
-        intersight_api_key_id=None,
-        intersight_api_key=None,
-        image_link_name=scu_image_link_name,
-        image_link_file_location=scu_image_link_file_location,
-        image_link_mount_options=scu_image_link_mount_options,
-        image_link_access_protocol_type=scu_image_link_access_protocol_type,
-        image_link_access_username=scu_image_link_access_username,
-        image_link_access_password=scu_image_link_access_password,
-        image_link_version=scu_image_link_version,
-        image_link_supported_models=scu_image_link_supported_models,
-        image_link_description=scu_image_link_description,
-        organization=os_install_organization,
-        intersight_base_url=intersight_base_url,
-        tags=os_install_tags,
-        preconfigured_api_client=main_intersight_api_client
-        )
+    if create_scu_image_link:
+        add_scu_image_link(
+            intersight_api_key_id=None,
+            intersight_api_key=None,
+            image_link_name=scu_image_link_name,
+            image_link_file_location=scu_image_link_file_location,
+            image_link_mount_options=scu_image_link_mount_options,
+            image_link_access_protocol_type=scu_image_link_access_protocol_type,
+            image_link_access_username=scu_image_link_access_username,
+            image_link_access_password=scu_image_link_access_password,
+            image_link_version=scu_image_link_version,
+            image_link_supported_models=scu_image_link_supported_models,
+            image_link_description=scu_image_link_description,
+            organization=os_install_organization,
+            intersight_base_url=intersight_base_url,
+            tags=os_install_tags,
+            preconfigured_api_client=main_intersight_api_client
+            )
 
     # Determine OS Image for OS Install
     if pre_loaded_os_image_link:
         os_install_os_image_link_name = pre_loaded_os_image_link_name
-    else:
+    elif create_os_image_link:
         os_install_os_image_link_name = os_image_link_name
+    else:
+        os_install_os_image_link_name = ""
 
     # Determine SCU Image for OS Install
     if pre_loaded_scu_image_link:
         os_install_scu_image_link_name = pre_loaded_scu_image_link
-    else:
+    elif create_scu_image_link:
         os_install_scu_image_link_name = scu_image_link_name
+    else:
+        os_install_scu_image_link_name = ""
 
     # Deploy the OS Install
     deploy_os_install(
@@ -2353,6 +2377,7 @@ def main():
         os_install_configuration_file_location=os_install_configuration_file_location,
         os_install_configuration_file_location_type=os_install_configuration_file_location_type,
         os_install_remove_return_from_configuration_file=os_install_remove_return_from_configuration_file,
+        set_os_install_target_disk=set_os_install_target_disk,
         os_install_target_disk_type=os_install_target_disk_type,
         os_install_target_disk_name=os_install_target_disk_name,
         os_install_target_disk_storage_controller_slot=os_install_target_disk_storage_controller_slot,
